@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cart</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .total-box {
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: right;
+            font-size: 1.5rem;
+        }
+        #grandTotal {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .checkout-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+        .checkout-btn:hover {
+            background-color: #218838;
+        }
+        .clear-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body onload="loadCart()">
+
+<nav class="navbar">
+    <div class="nav-left"><h2>🛍 SareeShop</h2></div>
+    <div class="nav-center">
+        <input id="searchInput" onkeyup="searchSarees()" placeholder="Search cart...">
+        <button>🔍</button>
+    </div>
+    <div class="nav-right">
+        <a href="index.html">Home</a>
+        <a href="likes.html">Likes</a>
+        <a href="profile.html" id="profileLink">👤 Profile</a>
+    </div>
+</nav>
+
+<h2 style="padding-left:20px;">🛒 My Cart</h2>
+
+<div class="products" id="cartList"></div>
+
+<div class="total-box" id="totalSection" style="display: none;">
+    <button class="clear-btn" onclick="clearFullCart()">Empty Cart 🗑️</button>
+    <strong>Total Amount: ₹<span id="grandTotal">0</span></strong>
+    <br>
+    <button class="checkout-btn" onclick="checkoutAll()">Checkout All Items 🛍️</button>
+</div>
+<script>
+function loadCart(){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let box = document.getElementById("cartList");
+    let totalSection = document.getElementById("totalSection");
+    let totalDisplay = document.getElementById("grandTotal");
+    
+    let total = 0;
+
+    if(cart.length === 0) {
+        box.innerHTML = "<p style='padding:20px;'>Your cart is empty.</p>";
+        totalSection.style.display = "none";
+        return;
+    }
+
+    totalSection.style.display = "block";
+    box.innerHTML = "";
+
+    cart.forEach((p, index) => {
+        // Clean the price string
+        let priceValue = typeof p.price === "string" 
+            ? parseInt(p.price.replace(/₹/g, "").trim()) 
+            : p.price;
+            
+        let qty = p.qty || 1;
+        total += (priceValue * qty);
+
+        box.innerHTML += `
+        <div class="card">
+            <img src="${p.image}">
+            <h3 class="pname">${p.name}</h3>
+            <p class="pprice">₹${priceValue}</p>
+            <p style="margin-bottom: 5px;">Qty: ${qty}</p>
+            
+            <div style="display: flex; gap: 10px; margin-top: 10px; padding: 0 10px 10px;">
+                <button onclick="removeCart(${index})" 
+                    style="width: 45px; height: 45px; background: #ffebee; color: red; border: 1px solid red; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                    ✕
+                </button>
+                <button onclick="placeOrder(${index})" 
+                    style="flex-grow: 1; height: 45px; background: #ff9800; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                    Order Now
+                </button>
+            </div>
+        </div>`;
+    });
+
+    totalDisplay.innerText = total;
+}
+
+function removeCart(i){
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    cart.splice(i, 1);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+}
+
+function clearFullCart() {
+    if(confirm("Are you sure you want to empty your cart?")) {
+        localStorage.removeItem("cart");
+        loadCart();
+    }
+}
+</script>
+<script src="script.js"></script>
+<script>
+    // Only keep unique logic here if needed, 
+    // but loadCart() is already in script.js
+    window.onload = loadCart; 
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Login</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-left"><h2>🛍 SareeShop Admin</h2></div>
+</nav>
+
+<div class="center-box">
+    <h2>Admin Login</h2>
+
+    <input id="adminEmail" placeholder="Admin Email">
+    <input id="adminPass" type="password" placeholder="Password">
+
+    <button onclick="adminLogin()">Login</button>
+</div>
+
+<script>
+function adminLogin(){
+    if(adminEmail.value === "admin@gmail.com" && adminPass.value === "1234"){
+        localStorage.setItem("adminLoggedIn", "true"); 
+        localStorage.removeItem("user"); // Clear user data so Home doesn't think you're a customer
+        
+        alert("Admin Login Success ✅");
+        window.location.href = "admin.html";
+    } else {
+        alert("Wrong credentials ❌");
+    }
+}
+</script>
+
+</body>
+</html>

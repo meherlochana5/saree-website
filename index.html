@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SareeShop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 🔝 NAVBAR -->
+<nav class="navbar">
+    <div class="nav-left">
+        <h2>🛍 SareeShop</h2>
+    </div>
+
+    <div class="nav-center">
+       <input type="text" id="searchInput" onkeyup="searchSarees()" placeholder="Search for sarees...">
+        <button>🔍</button>
+        <select id="priceFilter" onchange="filterProducts()">
+            <option value="all">All</option>
+            <option value="1500">Below ₹1500</option>
+            <option value="2000">Below ₹2000</option>
+            <option value="3000">Above ₹3000</option>
+        </select>
+    </div>
+
+    <div class="nav-right">
+        <a href="index.html">Home</a>
+        <a href="likes.html">❤️</a>
+        <a href="cart.html">🛒</a>
+        <a href="profile.html" id="profileLink">👤 Profile</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <h1>Elegant Silk Sarees</h1>
+    <p>Discover Traditional & Modern Styles</p>
+</section>
+
+<!-- PRODUCTS -->
+<section class="products" id="productContainer">
+    <p style="text-align: center; grid-column: 1 / -1;">Loading sarees...</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <p>© 2026 SareeShop</p>
+</footer>
+
+<!-- 1. Link to your updated script.js -->
+<script src="script.js"></script>
+
+<!-- 2. Script to fetch products from MongoDB -->
+<script>
+    async function loadSarees() {
+    const container = document.getElementById("productContainer");
+    try {
+        const response = await fetch('http://127.0.0.1:3000/get-products');
+        
+        if (!response.ok) {
+            throw new Error("Server responded with an error");
+        }
+
+        const sarees = await response.json();
+        container.innerHTML = ""; 
+
+        if (sarees.length === 0) {
+            container.innerHTML = "<p>No sarees in database. Add some from Admin!</p>";
+            return;
+        }
+
+        // Check if the person logged in is the Admin
+        const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+
+        sarees.forEach(saree => {
+            let actionButtons = "";
+
+            if (isAdmin) {
+                // Admin View: Show Delete Button
+                actionButtons = `
+                    <button onclick="deleteProduct('${saree._id}')" 
+                        style="flex-grow: 1; height: 45px; background: #f44336; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                        Delete Product (Admin)
+                    </button>`;
+            } else {
+                // User View: Show Like and Cart Buttons
+                actionButtons = `
+                    <button class="like-btn" onclick="likeItem(this)" 
+                        style="width: 45px; height: 45px; background: #fce4ec; border: 1px solid #ff4081; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                        ❤️
+                    </button>
+                    <button class="cart-btn" onclick="addCart(this)" 
+                        style="flex-grow: 1; height: 45px; background: #ff9800; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                        Add to Cart
+                    </button>`;
+            }
+
+            // Final Card HTML
+            container.innerHTML += `
+                <div class="card">
+                    <img src="${saree.image}" alt="Saree" onerror="this.src='https://via.placeholder.com/200'">
+                    <h3 class="pname">${saree.name}</h3>
+                    <p class="pprice">₹${saree.price}</p>
+                    
+                    <div class="card-action-row" style="display: flex; gap: 10px; margin-top: 10px; padding: 0 10px 10px;">
+                        ${actionButtons}
+                    </div>
+                </div>`;
+        });
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        container.innerHTML = "<p>Connection Error! Check if 'node server.js' is running.</p>";
+    }
+}
+// Add this inside your updateNavbar() function in script.js or index.html
+function updateNavbar() {
+    const isAdmin = localStorage.getItem("adminLoggedIn") === "true";
+    const user = JSON.parse(localStorage.getItem("user"));
+    const profileLink = document.getElementById("profileLink");
+
+    if (isAdmin) {
+        // If Admin is logged in, change the link to Dashboard and add a Logout
+        if (profileLink) {
+            profileLink.innerHTML = `<span style="color: #f59e0b;">🛠 Admin Panel</span>`;
+            profileLink.href = "admin.html";
+        }
+    } else if (user && profileLink) {
+        // If regular user is logged in
+        profileLink.innerText = "Hi, " + user.name.split(" ");
+        profileLink.href = "profile.html";
+    }
+}
+async function deleteProduct(id) {
+    if(confirm("Admin: Are you sure you want to delete this product?")) {
+        const res = await fetch(`http://127.0.0.1:3000/delete-product/${id}`, { method: 'DELETE' });
+        if(res.ok) {
+            alert("Product Deleted ✅");
+            loadSarees(); // Refresh the list
+        }
+    }
+}
+
+    document.addEventListener("DOMContentLoaded", loadSarees);
+    document.addEventListener("DOMContentLoaded", updateNavbar);
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Profile</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    /* Quick CSS fix for the +/- buttons since you mentioned they had no color */
+    .qty-controls button {
+        background-color: #ff9800 !important;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        margin: 0 5px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+    .section-title {
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+        margin-top: 30px;
+    }
+    #orderList .card {
+        border-left: 5px solid #28a745; /* Green border for placed orders */
+    }
+</style>
+<script src="script.js"></script>
+</head>
+
+<body onload="checkUser()"> <!-- Simplified onload, checkUser handles the rest -->
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="nav-left"><h2>🛍 SareeShop</h2></div>
+    <div class="nav-center">
+        <input placeholder="Search">
+        <button>🔍</button>
+    </div>
+    <div class="nav-right">
+        <a href="index.html">Home</a>
+        <a href="likes.html">❤️ Likes</a>
+        <a href="cart.html">🛒 Cart</a>
+        <a href="profile.html" id="profileLink">👤 Profile</a>
+    </div>
+</nav>
+
+<!-- PROFILE CONTAINER -->
+<div id="profileBox" style="display:none; padding:20px;">
+
+    <div class="profile-card">
+        <h2>My Profile</h2>
+        <p><b>Name:</b> <span id="pname"></span></p>
+        <p><b>Email:</b> <span id="pemail"></span></p>
+        <p><b>Phone:</b> <span id="pphone"></span></p>
+        <p><b>Address:</b> <span id="paddress"></span></p>
+
+        <div style="margin-top:15px;">
+            <input id="newAddress" placeholder="Update Delivery Address">
+            <button onclick="updateAddress()">Update Address</button>
+        </div>
+
+        <div style="margin-top:5px;">
+            <input id="newPhone" placeholder="Update Phone Number">
+            <button onclick="updatePhone()">Update Phone</button>
+        </div>
+
+        <button onclick="logout()" style="margin-top:20px; background-color: #f44336; color: white;">Logout</button>
+    </div>
+
+    <!-- PENDING SECTION -->
+    <h2 class="section-title">🕒 Pending Orders</h2>
+    <div id="orderAllSection" style="display:none; background: #fff3e0; padding: 15px; border-radius: 8px;">
+        <input id="globalAddress" placeholder="Address for all items" style="padding:8px; width:250px;">
+        <button class="cart-btn" onclick="orderAll()">Order All Items 🛒</button>
+    </div>
+    
+    <div class="products" id="pendingList">
+        <!-- JavaScript fills this -->
+    </div>
+
+    <!-- PLACED SECTION -->
+    <h2 class="section-title">✅ Placed Orders</h2>
+    <div class="products" id="orderList">
+        <!-- JavaScript fills this -->
+    </div>
+
+</div>
+
+<script>
+function checkUser(){
+    let user = JSON.parse(localStorage.getItem("user"));
+
+    if(!user){
+        alert("Please login first ❗");
+        window.location.href = "login.html";
+        return;
+    }
+
+    document.getElementById("profileBox").style.display = "block";
+    
+    // Call all load functions from script.js
+    loadProfile();
+    if(typeof loadPending === "function") loadPending();
+    if(typeof loadOrders === "function") loadOrders();
+    toggleOrderAll(); 
+}
+
+function loadProfile(){
+    let user = JSON.parse(localStorage.getItem("user")) || {};
+    // Make sure these IDs match your HTML and the keys match your Login/Signup data
+    if(document.getElementById("pname")) document.getElementById("pname").innerText = user.name || "User";
+    if(document.getElementById("pemail")) document.getElementById("pemail").innerText = user.email || "No Email";
+    if(document.getElementById("pphone")) document.getElementById("pphone").innerText = user.phone || "Not Set";
+    if(document.getElementById("paddress")) document.getElementById("paddress").innerText = user.address || "Not Set";
+}
+
+function logout(){
+    localStorage.removeItem("user");
+    window.location.href = "login.html"; 
+}
+
+function toggleOrderAll(){
+    let pending = JSON.parse(localStorage.getItem("pending")) || [];
+    let section = document.getElementById("orderAllSection");
+    if(section) {
+        section.style.display = (pending.length > 1) ? "block" : "none";
+    }
+}
+</script>
+
+</body>
+</html>

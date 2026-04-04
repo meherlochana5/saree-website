@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .order-card { background: white; padding: 15px; margin: 10px; border-radius: 8px; border-left: 5px solid orange; }
+        .product-list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #ddd; }
+    </style>
+</head>
+<body onload="loadAdminData()">
+<nav class="navbar">
+    <div class="nav-left"><h2>🛍 Admin Dashboard</h2></div>
+    
+    <div class="nav-right">
+        <a href="index.html">Home</a>
+        <a href="#" onclick="adminLogout()">Logout</a>
+    </div>
+</nav>
+<div class="admin-container">
+    
+
+    <div id="statsDisplay" style="display: flex; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin: 20px;">
+        Loading stats...
+    </div>
+
+    <div id="adminOrders"></div>
+    <div id="adminProducts"></div>
+</div>
+
+<div class="center-box">
+    <h2>Add New Product</h2>
+    <input id="pname" placeholder="Product Name">
+    <input id="pprice" placeholder="Price" type="number">
+    <input id="pimage" placeholder="Image URL">
+    <button onclick="addProduct()">Add Product</button>
+</div>
+
+<div style="padding: 20px;">
+    <h2>📦 Customer Orders (Confirm via Call)</h2>
+    <div id="adminOrdersList"></div>
+
+    <h2>🗑 Manage Products</h2>
+    <div id="adminProductList"></div>
+</div>
+
+<script>
+    if(localStorage.getItem("adminLoggedIn") !== "true"){
+    alert("Access denied ❌");
+    window.location.href = "login.html";
+}
+async function loadAdminData() {
+    // 1. Load Orders
+    const resOrders = await fetch('http://127.0.0.1:3000/admin/orders', {
+    headers: {
+        "admin": "true"
+    }
+})
+    const orders = await resOrders.json();
+    const orderBox = document.getElementById("adminOrders");
+    
+    orderBox.innerHTML = orders.reverse().map(o => {
+        let actionButtons = "";
+        
+        if (o.status === 'Pending') {
+            actionButtons = `
+                <button onclick="updateStatus('${o._id}', 'Confirmed')" style="background:#28a745; color:white;">Confirm Order</button>
+                <button onclick="updateStatus('${o._id}', 'Rejected')" style="background:red; color:white; margin-left:10px;">Reject Order</button>
+            `;
+        } else if (o.status === 'Confirmed') {
+            actionButtons = `<button onclick="updateStatus('${o._id}', 'Reached')" style="background:#007bff; color:white;">Mark Delivered</button>`;
+        } else if (o.status === 'Rejected') {
+            actionButtons = `<span style="color:red; font-weight:bold;">❌ Rejected</span>`;
+        } else {
+            actionButtons = `<span style="color:green; font-weight:bold;">✅ Completed</span>`;
+        }
+
+        return `
+            <div class="order-card" style="border-left: 5px solid ${o.status === 'Reached' ? 'green' : (o.status === 'Rejected' ? 'red' : 'orange')}">
+                <p><b>Customer:</b> ${o.userName} | <b>Phone:</b> ${o.userPhone}</p>
+                <p><b>Address:</b> ${o.address}</p>
+                <p><b>Status:</b> <span class="status-badge">${o.status}</span></p>
+                <div style="margin-top:10px;">
+                    ${actionButtons}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // 2. Load Products with Edit/Delete options
+    const resProds = await fetch('http://127.0.0.1:3000/get-products');
+    const prods = await resProds.json();
+    document.getElementById("adminProductList").innerHTML = prods.map(p => `
+        <div class="product-list-item">
+            <span>${p.name} - ₹${p.price}</span>
+            <div>
+                <button onclick="editProduct('${p._id}', '${p.name}', '${p.price}')" style="background:orange; color:white; margin-right:5px;">Edit</button>
+                <button onclick="deleteProduct('${p._id}')" style="background:red; color:white;">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+async function loadStats() {
+    try {
+        const userRes = await fetch('http://127.0.0.1:3000/admin/stats/users-count');
+        const userData = await userRes.json();
+        
+        const salesRes = await fetch('http://127.0.0.1:3000/admin/stats/total-sold');
+        const salesData = await salesRes.json();
+
+        document.getElementById("statsDisplay").innerHTML = `
+            <div style="padding:10px; background:#e3f2fd; border-radius:5px;"><b>Total Users:</b> ${userData.totalUsers}</div>
+            <div style="padding:10px; background:#fff3e0; border-radius:5px;"><b>Total Items Sold:</b> ${salesData.totalSold}</div>
+        `;
+    } catch(e) { console.log("Stats fetch failed"); }
+}
+async function updateStatus(id, status) {
+    await fetch('http://127.0.0.1:3000/admin/update-status', {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "admin": "true"
+    },
+    body: JSON.stringify({ id, status })
+});
+    loadAdminData();
+}
+
+async function editProduct(id, oldName, oldPrice) {
+    const newName = prompt("Enter new name:", oldName);
+    const newPrice = prompt("Enter new price:", oldPrice);
+
+    if (newName && newPrice) {
+        await fetch('http://127.0.0.1:3000/update-product', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id, name: newName, price: Number(newPrice) })
+        });
+        alert("Product Updated! ✅");
+        loadAdminData();
+    }
+}
+
+async function deleteProduct(id) {
+    if(confirm("Delete this product?")) {
+        await fetch(`http://127.0.0.1:3000/delete-product/${id}`, { method: 'DELETE' });
+        loadAdminData();
+    }
+}
+
+async function addProduct() {
+
+    // ✅ ADD ONLY THIS (NO CHANGE TO YOUR LOGIC)
+    if(!document.getElementById("pname").value ||
+       !document.getElementById("pprice").value ||
+       !document.getElementById("pimage").value){
+        alert("Fill all fields ❗");
+        return;
+    }
+
+    const productData = { 
+        name: document.getElementById("pname").value, 
+        price: Number(document.getElementById("pprice").value), 
+        image: document.getElementById("pimage").value 
+    };
+
+    await fetch('http://127.0.0.1:3000/add-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData)
+    });
+
+    alert("Product Added!");
+    loadAdminData();
+}
+function adminLogout() {
+    localStorage.removeItem("adminLoggedIn");
+    window.location.href = "index.html"; // Go back to Home as a guest
+}
+// This ensures the stats load automatically
+document.addEventListener("DOMContentLoaded", () => {
+    // Check if we are on the admin page by looking for the stats container
+    if (document.getElementById("statsDisplay")) {
+        loadAdminStats(); 
+    }
+});
+function adminLogout(){
+    localStorage.removeItem("adminLoggedIn");
+    alert("Admin Logged Out");
+    window.location.href = "login.html";
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sign Up</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="nav-left"><h2>🛍 SareeShop</h2></div>
+    <div class="nav-right">
+        <a href="index.html">Home</a>
+    </div>
+</nav>
+
+<div class="center-box">
+    <h2>Create Account</h2>
+
+    <input id="name" placeholder="Name">
+    <input id="email" placeholder="Email">
+    <input id="phone" placeholder="Phone">
+    <input id="address" placeholder="Address">
+
+    <input id="password" type="password" placeholder="Password">
+    <input id="confirmPassword" type="password" placeholder="Confirm Password">
+
+    <button onclick="signup()">Create Account</button>
+</div>
+
+<script>
+function signup(){
+
+    let pass = document.getElementById("password").value.trim();
+    let repass = document.getElementById("confirmPassword").value.trim();
+
+    if(pass !== repass){
+        alert("Passwords do not match ❌");
+        return;
+    }
+
+    let user = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        address: document.getElementById("address").value.trim(),
+        pass: pass
+    };
+
+    fetch("http://localhost:3000/register", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(user)
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        window.location.href = "login.html";
+    })
+    .catch(err => alert("Error creating account"));
+}
+</script>
+
+</body>
+</html>

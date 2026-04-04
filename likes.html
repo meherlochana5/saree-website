@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Likes</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body onload="loadLikes()">
+
+<!-- NAVBAR -->
+<nav class="navbar">
+    <div class="nav-left"><h2>🛍 SareeShop</h2></div>
+
+    <div class="nav-center">
+        <input placeholder="Search">
+        <button>🔍</button>
+    </div>
+
+    <div class="nav-right">
+        <a href="index.html">Home</a>
+        <a href="cart.html">Cart</a>
+       <a href="profile.html" id="profileLink">👤 Profile</a>
+    </div>
+</nav>
+
+<h2 style="padding-left:20px;">❤️ Liked Items</h2>
+
+<div class="products" id="likeList"></div>
+<script>
+function loadLikes(){
+    let likes = JSON.parse(localStorage.getItem("likes")) || [];
+    let box = document.getElementById("likeList");
+    box.innerHTML = "";
+
+    if (likes.length === 0) {
+        box.innerHTML = "<p style='padding:20px;'>No liked items yet! ❤️</p>";
+        return;
+    }
+
+    likes.forEach((p, index) => {
+        box.innerHTML += `
+        <div class="card">
+            <img src="${p.image}">
+            <h3 class="pname">${p.name}</h3>
+            <p class="pprice">₹${p.price}</p>
+            
+            <div style="display: flex; gap: 10px; margin-top: 10px; padding: 0 10px 10px;">
+                <button class="like-btn" onclick="removeLike(${index})" 
+                    style="width: 45px; height: 45px; background: #ffebee; border: 1px solid red; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                    ❌
+                </button>
+                <button class="cart-btn" onclick="addCartFromLike(${index})" 
+                    style="flex-grow: 1; height: 45px; background: #ff9800; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                    Add to Cart
+                </button>
+            </div>
+        </div>`;
+    });
+}
+
+function removeLike(i){
+    let likes = JSON.parse(localStorage.getItem("likes"));
+    likes.splice(i,1);
+    localStorage.setItem("likes", JSON.stringify(likes));
+    loadLikes();
+}
+
+function addCartFromLike(i){
+    let likes = JSON.parse(localStorage.getItem("likes")) || [];
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let item = likes[i];
+
+    let exists = cart.find(p => p.name === item.name);
+    if(exists){
+        alert("Already in Cart 🛒");
+        return;
+    }
+
+    cart.push({
+        name: item.name,
+        price: parseInt(item.price.toString().replace(/₹/g,"")), 
+        image: item.image,
+        qty: 1
+    });
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    alert("Added to Cart 🛒");
+}
+</script>
+
+</body>
+</html>
