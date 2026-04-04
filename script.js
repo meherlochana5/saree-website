@@ -159,7 +159,7 @@ async function finalOrder(i) {
     };
 
     try {
-        const response = await fetch('http://127.0.0.1:3000/place-order', {
+        const response = await fetch('https://saree-website-zn6k.onrender.com/place-order', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(orderData)
@@ -385,7 +385,7 @@ async function orderAll() {
             status: "Pending"
         };
 
-        await fetch('http://127.0.0.1:3000/place-order', {
+        await fetch('https://saree-website-zn6k.onrender.com/place-order', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(orderData)
