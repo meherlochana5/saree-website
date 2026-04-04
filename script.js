@@ -277,7 +277,7 @@ async function loadOrders() {
     }
 
     try {
-        const res = await fetch(`http://127.0.0.1:3000/my-orders/${encodeURIComponent(user.email)}`);
+        const res = await fetch(`https://saree-website-zn6k.onrender.com/my-orders/${encodeURIComponent(user.email)}`);
         if (!res.ok) throw new Error("Server error");
 
         const allOrders = await res.json();
@@ -347,7 +347,7 @@ async function loadOrders() {
 async function cancelLiveOrder(id) {
     if (confirm("Are you sure you want to cancel this order? 🛑")) {
         try {
-            const res = await fetch(`http://127.0.0.1:3000/admin/update-status`, {
+            const res = await fetch(`https://saree-website-zn6k.onrender.com/admin/update-status`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id: id, status: 'Cancelled' })
@@ -458,7 +458,7 @@ async function cancelLiveOrder(id) {
     if (confirm("Are you sure you want to cancel this order? 🛑")) {
         try {
             // This sends a request to your server to change the status to 'Cancelled'
-            const res = await fetch(`http://127.0.0.1:3000/admin/update-status`, {
+            const res = await fetch(`https://saree-website-zn6k.onrender.com/admin/update-status`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id: id, status: 'Cancelled' })
@@ -476,8 +476,8 @@ async function cancelLiveOrder(id) {
 async function loadAdminData() {
     try {
         // 1. Fetch Orders and Products from your Node.js server
-        const resOrders = await fetch('http://127.0.0.1:3000/admin/orders');
-        const resProducts = await fetch('http://127.0.0.1:3000/get-products');
+        const resOrders = await fetch('https://saree-website-zn6k.onrender.com/admin/orders');
+        const resProducts = await fetch('https://saree-website-zn6k.onrender.com/get-products');
         
         const orders = await resOrders.json();
         const products = await resProducts.json();
@@ -523,9 +523,9 @@ async function loadAdminStats() {
     const statsDisplay = document.getElementById("statsDisplay");
     try {
         const [userRes, orderRes, productRes] = await Promise.all([
-            fetch('http://127.0.0.1:3000/admin/stats/users-count'),
-            fetch('http://127.0.0.1:3000/admin/stats/order-status-counts'),
-            fetch('http://127.0.0.1:3000/get-products')
+            fetch('https://saree-website-zn6k.onrender.com/admin/stats/users-count'),
+            fetch('https://saree-website-zn6k.onrender.com/admin/stats/order-status-counts'),
+            fetch('https://saree-website-zn6k.onrender.com/get-products')
         ]);
 
         const userData = await userRes.json();

@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -6,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb://meherlochana5_db_user:a4Sk2h5G8CDBMt0r@ac-ets3sch-shard-00-00.lk0ujej.mongodb.net:27017,ac-ets3sch-shard-00-01.lk0ujej.mongodb.net:27017,ac-ets3sch-shard-00-02.lk0ujej.mongodb.net:27017/sareeShop?ssl=true&replicaSet=atlas-fzssqq-shard-0&authSource=admin&retryWrites=true&w=majority')
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("✅ Database Connected"))
 .catch(err => console.error("❌ Connection Error:", err));
 
@@ -155,5 +156,11 @@ app.get('/admin/users', async (req, res) => {
     } catch (err) {
         res.status(500).send("Error fetching users");
     }
+});
+// ✅ SERVE FRONTEND FILES
+app.use(express.static(__dirname));
+
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/index.html");
 });
 app.listen(3000, () => console.log("🚀 Server: http://localhost:3000"));

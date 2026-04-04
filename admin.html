@@ -51,7 +51,7 @@
 }
 async function loadAdminData() {
     // 1. Load Orders
-    const resOrders = await fetch('http://127.0.0.1:3000/admin/orders', {
+    const resOrders = await fetch('https://saree-website-zn6k.onrender.com/admin/orders', {
     headers: {
         "admin": "true"
     }
@@ -88,7 +88,7 @@ async function loadAdminData() {
     }).join('');
     
     // 2. Load Products with Edit/Delete options
-    const resProds = await fetch('http://127.0.0.1:3000/get-products');
+    const resProds = await fetch('https://saree-website-zn6k.onrender.com/get-products');
     const prods = await resProds.json();
     document.getElementById("adminProductList").innerHTML = prods.map(p => `
         <div class="product-list-item">
