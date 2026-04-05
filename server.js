@@ -1,17 +1,11 @@
 require('dotenv').config();
 
 const nodemailer = require("nodemailer"); // ✅ ADD THIS
-
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    service: "gmail",
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false
     }
 });
 const express = require('express');
@@ -193,13 +187,11 @@ app.listen(process.env.PORT, '0.0.0.0', () => {
 });
 app.post("/send-otp", async (req, res) => {
     const { email } = req.body;
-
+console.log("Sending email to:", email);
+console.log("EMAIL ERROR:", err);
     const otp = Math.floor(100000 + Math.random() * 900000);
 
-    otpStore[email] = {
-        otp,
-        expires: Date.now() + 3 * 60 * 1000
-    };
+    otpStore[email] = otp;
 
     const mailOptions = {
         from: process.env.EMAIL_USER,
@@ -217,24 +209,14 @@ app.post("/send-otp", async (req, res) => {
     }
 });
 app.post("/verify-otp", (req, res) => {
-    const { email, otp } = req.body;
+    const { email, otp } = req.body; // ✅ GET DATA
 
-    const record = otpStore[email];
-
-    if (!record) return res.status(400).send("No OTP");
-
-    if (Date.now() > record.expires) {
+    if (otpStore[email] == otp) {
         delete otpStore[email];
-        return res.status(400).send("OTP expired");
+        res.send("OTP Verified");
+    } else {
+        res.status(400).send("Invalid OTP");
     }
-
-    if (String(record.otp) !== String(otp)) {
-        return res.status(400).send("Wrong OTP");
-    }
-
-    delete otpStore[email];
-
-    res.send("OTP Verified");
 });
 app.post("/reset-password", async (req, res) => {
     const { email, newPass } = req.body;

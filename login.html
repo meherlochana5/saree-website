@@ -110,36 +110,44 @@ function forgotPass() {
     });
 }
 function verifyOtp() {
-    let otp = document.getElementById("otpInput").value.trim();
-
-    if (!otp) {
-        alert("Enter OTP first");
-        return;
-    }
+    const otp = document.getElementById("otpInput").value.trim();
 
     fetch("https://saree-website-zn6k.onrender.com/verify-otp", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: {"Content-Type":"application/json"},
         body: JSON.stringify({
             email: currentEmail,
             otp: otp
         })
     })
-    .then(res => {
-        if (!res.ok) throw new Error();
-        return res.json();
+    .then(res => res.text())
+    .then(msg => {
+        if(msg.includes("Verified")){
+            showToast("OTP Verified ✅");
+            document.getElementById("resetBox").style.display = "block";
+        } else {
+            showToast("Invalid OTP ❌");
+        }
     })
-    .then(() => {
-        alert("OTP Verified ✅");
+    .catch(() => showToast("Server error ❌"));
+}
+function resetPassword() {
+    const newPass = document.getElementById("newPass").value.trim();
 
-        document.getElementById("otpBox").style.display = "none";
-        document.getElementById("resetBox").style.display = "block";
+    fetch("https://saree-website-zn6k.onrender.com/reset-password", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+            email: currentEmail,
+            newPass: newPass
+        })
     })
-    .catch(() => {
-        alert("Invalid OTP ❌");
-    });
+    .then(res => res.text())
+    .then(msg => {
+        showToast("Password Updated ✅");
+        window.location.reload();
+    })
+    .catch(() => showToast("Error ❌"));
 }
 </script>
 <div id="toast"></div>
