@@ -21,14 +21,14 @@ function updateNavbar() {
 // Add this logout function to script.js as well
 function adminLogout() {
     localStorage.removeItem("adminLoggedIn");
-    alert("Admin Logged Out");
+    showToast("Admin Logged Out");
     window.location.href = "index.html";
 }
 // 2. ❤️ LIKE (Guest Check Included)
 function likeItem(btn){
     let user = localStorage.getItem("user");
     if (!user) {
-        alert("Please login to save your favorites! ❤️");
+        showToast("Please login to save your favorites! ❤️");
         window.location.href = "login.html";
         return;
     }
@@ -42,11 +42,11 @@ function likeItem(btn){
     let exists = likes.some(p => p.name === name);
 
     if(exists){
-        alert("Already Liked ❤️");
+        showToast("Already Liked ❤️");
     } else {
         likes.push({ name, price, image });
         localStorage.setItem("likes", JSON.stringify(likes));
-        alert("Added to Likes ❤️");
+        showToast("Added to Likes ❤️");
     }
 }
 
@@ -54,7 +54,7 @@ function likeItem(btn){
 function addCart(btn) {
     let user = localStorage.getItem("user");
     if (!user) {
-        alert("Please login to start shopping! 🛍️");
+        showToast("Please login to continue 🔐");
         window.location.href = "login.html";
         return;
     }
@@ -69,13 +69,13 @@ function addCart(btn) {
     let existing = cart.find(p => p.name === name);
 
     if (existing) {
-        alert("Already in Cart 🛒");
+        showToast("Already in Cart 🛒");
         return;
     }
 
     cart.push({ name, price, image, qty: 1 });
     localStorage.setItem("cart", JSON.stringify(cart));
-    alert("Added to Cart 🛒");
+   showToast("Added to Cart 🛒");
 }
 
 // 5. 🔍 FILTER PRODUCTS
@@ -112,7 +112,7 @@ function checkoutAll() {
     let user = JSON.parse(localStorage.getItem("user")) || {};
 
     if (cart.length === 0) {
-        alert("Your cart is empty!");
+        showToast("Cart is empty ❗");
         return;
     }
 
@@ -128,7 +128,7 @@ function checkoutAll() {
     localStorage.removeItem("cart");
     localStorage.setItem("pending", JSON.stringify(pending));
 
-    alert("All items moved to checkout! ✅");
+    showToast("All items moved to checkout! ✅");
     window.location.href = "profile.html";
 }
 
@@ -144,7 +144,7 @@ async function finalOrder(i) {
     let finalAddress = document.getElementById("addr" + i).value.trim();
 
     if (!finalName || !finalPhone || !finalAddress) {
-        alert("Please fill all delivery details! 👤📞📍");
+        showToast("Please fill all delivery details! 👤📞📍");
         return;
     }
 
@@ -170,7 +170,7 @@ async function finalOrder(i) {
             pending.splice(i, 1);
             localStorage.setItem("pending", JSON.stringify(pending));
 
-            alert("✅ Order Sent to Admin!");
+            showToast("✅ Order Sent to Admin!");
             loadPending(); 
             loadOrders(); // This now fetches live data from the server
         }
@@ -207,7 +207,7 @@ function updateAddress() {
     if(!newAddr) return;
     user.address = newAddr;
     localStorage.setItem("user", JSON.stringify(user));
-    alert("Address Updated!");
+    showToast("Address Updated!");
     location.reload();
 }
 
@@ -217,7 +217,7 @@ function updatePhone() {
     if(!newPh) return;
     user.phone = newPh;
     localStorage.setItem("user", JSON.stringify(user));
-    alert("Phone Updated!");
+    showToast("Phone Updated!");
     location.reload();
 }
 
@@ -353,7 +353,7 @@ async function cancelLiveOrder(id) {
                 body: JSON.stringify({ id: id, status: 'Cancelled' })
             });
             if (res.ok) {
-                alert("Order Cancelled Successfully ✅");
+                showToast("Order Cancelled Successfully ✅");
                 loadOrders(); // Refresh the list
             }
         } catch (err) {
@@ -371,7 +371,7 @@ async function orderAll() {
     let globalAddr = document.getElementById("globalAddress").value;
 
     if (pending.length === 0) return;
-    if (!globalAddr) { alert("Please enter a global address!"); return; }
+    if (!globalAddr) { showToast("Please enter a global address!"); return; }
 
     // Loop through and send each item to the database
     for (let i = 0; i < pending.length; i++) {
@@ -393,7 +393,7 @@ async function orderAll() {
     }
 
     localStorage.setItem("pending", JSON.stringify([])); 
-    alert("✅ All orders sent to Admin!");
+    showToast("✅ All orders sent to Admin!");
     loadPending(); 
     loadOrders(); 
 }
@@ -451,7 +451,7 @@ function placeOrder(i) {
     localStorage.setItem("pending", JSON.stringify(pending));
     localStorage.setItem("cart", JSON.stringify(cart));
 
-    alert("Item moved to Pending Orders! ✅");
+    showToast("Item moved to Pending Orders! ✅");
     window.location.href = "profile.html";
 }
 async function cancelLiveOrder(id) {
@@ -464,7 +464,7 @@ async function cancelLiveOrder(id) {
                 body: JSON.stringify({ id: id, status: 'Cancelled' })
             });
             if (res.ok) {
-                alert("Order Cancelled Successfully ✅");
+               showToast("Order Cancelled Successfully ✅");
                 loadOrders(); // Refresh the list to show it's gone or updated
             }
         } catch (err) {
@@ -553,4 +553,15 @@ async function loadAdminStats() {
     } catch (error) {
         statsDisplay.innerHTML = "<p style='color:red;'>Error connecting to server</p>";
     }
+}
+function showToast(msg) {
+    let t = document.getElementById("toast");
+    if(!t) return;
+
+    t.innerText = msg;
+    t.style.display = "block";
+
+    setTimeout(() => {
+        t.style.display = "none";
+    }, 2000);
 }

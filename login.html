@@ -27,17 +27,25 @@
         Don't have an account? <a href="signup.html" class="toggle-link">Signup here</a>
     </p>
 </div>
+<div id="otpBox" style="display:none; text-align:center; margin-top:20px;">
+    <input id="otpInput" placeholder="Enter OTP">
+    <button onclick="verifyOtp()">Verify OTP</button>
+</div>
+
+<div id="resetBox" style="display:none; text-align:center; margin-top:20px;">
+    <input id="newPass" placeholder="Enter New Password">
+    <button onclick="resetPassword()">Reset Password</button>
+</div>
 
 <script>
-    function forgotPass(){
-    alert("Forgot password feature not implemented yet ❗");
-}
+   
+   
 function handleLogin() {
     let email = document.getElementById("email").value.trim();
     let pass = document.getElementById("pass").value.trim();
 
     if(!email || !pass) {
-        alert("Please fill all fields!");
+        showToast("Please fill all fields!");
         return;
     }
 
@@ -59,18 +67,68 @@ function handleLogin() {
     localStorage.removeItem("adminLoggedIn"); // ✅ ADD THIS
 
     localStorage.setItem("user", JSON.stringify(user));
-    alert("Login Successful! 🛍️");
+    showToast("Login Successful! 🛍️");
     window.location.href = "index.html";
 })
     .catch(() => {
-        alert("Invalid Email or Password ❌");
+        showToast("Invalid Email or Password ❌");
     });
 }
+let currentEmail = ""; // ✅ GLOBAL
 
 function forgotPass() {
-    alert("Forgot password not implemented yet");
+    let email = document.getElementById("email").value;
+
+    if (!email) {
+        showToast("Enter email first ❗", "error");
+        return;
+    }
+
+    currentEmail = email;
+
+    fetch("https://saree-website-zn6k.onrender.com/send-otp", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email })
+    })
+    .then(() => {
+        showToast("OTP sent 📩");
+        document.getElementById("otpBox").style.display = "block";
+    });
+}
+function verifyOtp() {
+    let otp = document.getElementById("otpInput").value;
+
+    fetch("https://saree-website-zn6k.onrender.com/verify-otp", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email: currentEmail, otp })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        if(msg.includes("Verified")){
+            showToast("OTP Verified ✅");
+            document.getElementById("resetBox").style.display = "block";
+        } else {
+            showToast("Invalid OTP ❌", "error");
+        }
+    });
+}
+function resetPassword() {
+    let newPass = document.getElementById("newPass").value;
+
+    fetch("https://saree-website-zn6k.onrender.com/reset-password", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email: currentEmail, newPass })
+    })
+    .then(res => res.text())
+    .then(() => {
+        showToast("Password updated ✅");
+    });
 }
 </script>
-
+<div id="toast"></div>
+<script src="script.js"></script>
 </body>
 </html>

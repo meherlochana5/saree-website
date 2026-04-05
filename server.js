@@ -1,4 +1,13 @@
 require('dotenv').config();
+const nodemailer = require("nodemailer");
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+}
+});
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -35,6 +44,7 @@ const Order = mongoose.model('Order', {
     status: { type: String, default: 'Pending' },
     date: { type: Date, default: Date.now } // <--- ADD THIS LINE
 });
+let otpStore = {};
 // --- ROUTES ---
 
 // Registration with uniqueness check
@@ -163,4 +173,80 @@ app.use(express.static(__dirname));
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
-app.listen(3000, () => console.log("🚀 Server: http://localhost:3000"));
+const PORT = process.env.PORT || 3000;
+
+// serve frontend
+app.use(express.static(__dirname));
+
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/index.html");
+});
+
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.post("/send-otp", async (req, res) => {
+    const { email } = req.body;
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    otpStore[email] = {
+        otp,
+        expires: Date.now() + 3 * 60 * 1000
+    };
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "OTP for SareeShop",
+        text: `Your OTP is ${otp}. Valid for 3 minutes.`
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        res.send("OTP sent");
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Error sending OTP");
+    }
+});
+app.post("/verify-otp", (req, res) => {
+    const { email, otp } = req.body;
+
+    const record = otpStore[email];
+
+    if (!record) return res.status(400).send("No OTP");
+
+    if (Date.now() > record.expires) {
+        delete otpStore[email];
+        return res.status(400).send("OTP expired");
+    }
+
+    if (record.otp != otp) {
+        return res.status(400).send("Wrong OTP");
+    }
+
+    delete otpStore[email];
+
+    res.send("OTP Verified");
+});
+app.post("/reset-password", async (req, res) => {
+    const { email, newPass } = req.body;
+
+    const bcrypt = require("bcrypt");
+    const hashed = await bcrypt.hash(newPass, 10);
+
+    await User.findOneAndUpdate(
+        { email },
+        { pass: hashed }
+    );
+
+    res.send("Password updated successfully ✅");
+});
+app.post("/admin-login", (req, res) => {
+    const { email, pass } = req.body;
+
+    if(email === "admin@gmail.com" && pass === "1234"){
+        res.send({ success: true });
+    } else {
+        res.status(401).send({ success: false });
+    }
+});

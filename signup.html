@@ -56,12 +56,13 @@ function signup(){
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message);
+        showToast("Account Created 🎉");
         window.location.href = "login.html";
     })
     .catch(err => alert("Error creating account"));
 }
 </script>
-
+<div id="toast"></div>
+<script src="script.js"></script>
 </body>
 </html>

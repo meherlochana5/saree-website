@@ -22,17 +22,32 @@
 
 <script>
 function adminLogin(){
-    if(adminEmail.value === "admin@gmail.com" && adminPass.value === "1234"){
-        localStorage.setItem("adminLoggedIn", "true"); 
-        localStorage.removeItem("user"); // Clear user data so Home doesn't think you're a customer
-        
-        alert("Admin Login Success ✅");
+    let email = document.getElementById("adminEmail").value;
+    let pass = document.getElementById("adminPass").value;
+
+    fetch("https://saree-website-zn6k.onrender.com/admin-login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, pass })
+    })
+    .then(res => {
+        if(!res.ok) throw new Error();
+        return res.json();
+    })
+    .then(() => {
+        localStorage.setItem("adminLoggedIn", "true");
+        localStorage.removeItem("user");
+
+        showToast("Admin Login Success ✅");
         window.location.href = "admin.html";
-    } else {
-        alert("Wrong credentials ❌");
-    }
+    })
+    .catch(() => {
+        showToast("Wrong Admin Credentials ❌");
+    });
 }
 </script>
-
+<div id="toast"></div>
 </body>
 </html>
