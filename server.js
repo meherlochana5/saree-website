@@ -228,7 +228,7 @@ app.post("/verify-otp", (req, res) => {
         return res.status(400).send("OTP expired");
     }
 
-    if (record.otp != otp) {
+    if (String(record.otp) !== String(otp)) {
         return res.status(400).send("Wrong OTP");
     }
 

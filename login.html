@@ -109,6 +109,38 @@ function forgotPass() {
         showToast("Server error ❌");
     });
 }
+function verifyOtp() {
+    let otp = document.getElementById("otpInput").value.trim();
+
+    if (!otp) {
+        alert("Enter OTP first");
+        return;
+    }
+
+    fetch("https://saree-website-zn6k.onrender.com/verify-otp", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            email: currentEmail,
+            otp: otp
+        })
+    })
+    .then(res => {
+        if (!res.ok) throw new Error();
+        return res.json();
+    })
+    .then(() => {
+        alert("OTP Verified ✅");
+
+        document.getElementById("otpBox").style.display = "none";
+        document.getElementById("resetBox").style.display = "block";
+    })
+    .catch(() => {
+        alert("Invalid OTP ❌");
+    });
+}
 </script>
 <div id="toast"></div>
 <script src="script.js"></script>
