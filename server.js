@@ -1,11 +1,12 @@
 require('dotenv').config();
-const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // IMPORTANT
     auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-}
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
 });
 
 const express = require('express');
@@ -182,7 +183,9 @@ app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
 
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(process.env.PORT, '0.0.0.0', () => {
+    console.log("🚀 Server running");
+});
 app.post("/send-otp", async (req, res) => {
     const { email } = req.body;
 

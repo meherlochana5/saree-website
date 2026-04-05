@@ -77,54 +77,36 @@ function handleLogin() {
 let currentEmail = ""; // ✅ GLOBAL
 
 function forgotPass() {
-    let email = document.getElementById("email").value;
+    let email = document.getElementById("email").value.trim();
 
     if (!email) {
-        showToast("Enter email first ❗", "error");
+        showToast("Enter email first ❗");
         return;
     }
 
     currentEmail = email;
+
+    showToast("Sending OTP... ⏳"); // 👈 ADD THIS
 
     fetch("https://saree-website-zn6k.onrender.com/send-otp", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ email })
     })
-    .then(() => {
-        showToast("OTP sent 📩");
-        document.getElementById("otpBox").style.display = "block";
-    });
-}
-function verifyOtp() {
-    let otp = document.getElementById("otpInput").value;
-
-    fetch("https://saree-website-zn6k.onrender.com/verify-otp", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ email: currentEmail, otp })
-    })
     .then(res => res.text())
     .then(msg => {
-        if(msg.includes("Verified")){
-            showToast("OTP Verified ✅");
-            document.getElementById("resetBox").style.display = "block";
-        } else {
-            showToast("Invalid OTP ❌", "error");
-        }
-    });
-}
-function resetPassword() {
-    let newPass = document.getElementById("newPass").value;
+        console.log("SERVER RESPONSE:", msg); // 👈 VERY IMPORTANT
 
-    fetch("https://saree-website-zn6k.onrender.com/reset-password", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ email: currentEmail, newPass })
+        if(msg.includes("OTP sent")){
+            showToast("OTP sent 📩");
+            document.getElementById("otpBox").style.display = "block";
+        } else {
+            showToast(msg); // 👈 SHOW REAL ERROR
+        }
     })
-    .then(res => res.text())
-    .then(() => {
-        showToast("Password updated ✅");
+    .catch((err) => {
+        console.log(err);
+        showToast("Server error ❌");
     });
 }
 </script>
