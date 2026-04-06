@@ -74,55 +74,70 @@ function handleLogin() {
         showToast("Invalid Email or Password ❌");
     });
 }
-let currentEmail = ""; // ✅ KEEP THIS
+let currentEmail = ""; 
 
 function forgotPass() {
-    let email = document.getElementById("email").value;
+    let email = document.getElementById("email").value.trim();
+    
+    if (!email) {
+        alert("Please enter your Email Address first!");
+        return;
+    }
+
     currentEmail = email;
 
     fetch("https://saree-website-zn6k.onrender.com/send-otp", {
         method: "POST",
-        headers: {"Content-Type":"application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email })
     })
-    .then(res => res.text())
+    .then(res => {
+        if (!res.ok) throw new Error("Email not found!");
+        return res.text();
+    })
     .then(msg => {
-        console.log(msg);
+        alert("OTP sent to " + currentEmail);
         document.getElementById("otpBox").style.display = "block";
     })
-    .catch(err => console.log(err));
+    .catch(err => alert(err.message));
 }
-
 
 function verifyOtp() {
     let otp = document.getElementById("otpInput").value;
 
     fetch("https://saree-website-zn6k.onrender.com/verify-otp", {
         method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ email: currentEmail, otp })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: currentEmail, otp }) 
     })
-    .then(res => res.text())
-    .then(msg => {
-        document.getElementById("resetBox").style.display = "block";
-    })
-    .catch(err => console.log(err));
+    .then(res => {
+        if (res.ok) {
+            alert("OTP Verified ✅");
+            document.getElementById("otpBox").style.display = "none";
+            document.getElementById("resetBox").style.display = "block";
+        } else {
+            alert("Invalid OTP ❌");
+        }
+    });
 }
 
 function resetPassword() {
     let newPass = document.getElementById("newPass").value;
+    
+    if(!newPass) return alert("Please enter a new password");
 
     fetch("https://saree-website-zn6k.onrender.com/reset-password", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ email: currentEmail, newPass })
     })
-    .then(res => res.text())
-    .then(msg => {
-        alert("Password updated ✅");
-        window.location.reload();
+    .then(res => {
+        if(res.ok) {
+            alert("Password Updated! You can now login.");
+            window.location.reload();
+        }
     })
-    .catch(err => console.log(err));
+    .catch(err => alert("Reset failed"));
 }
 </script>
 <div id="toast"></div>

@@ -1,28 +1,21 @@
-require('dotenv').config();
+require('dotenv').config();  // MUST BE FIRST
 
-const nodemailer = require("nodemailer"); // ✅ ADD THIS
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    family: 4, // ✅ ADD THIS
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 1. DATABASE CONNECTION
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("✅ Database Connected"))
 .catch(err => console.error("❌ Connection Error:", err));
 
+// 2. MODELS 
 const Product = mongoose.model('Product', {
     name: String,
     price: Number,
@@ -45,42 +38,45 @@ const Order = mongoose.model('Order', {
     items: Array,
     total: Number,
     status: { type: String, default: 'Pending' },
-    date: { type: Date, default: Date.now } // <--- ADD THIS LINE
+    date: { type: Date, default: Date.now } 
 });
+
 let otpStore = {};
+
+// 3. NODEMAILER SETUP (Fixed: Only defined ONCE)
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, 
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false 
+    }
+});
+
 // --- ROUTES ---
 
-// Registration with uniqueness check
-const bcrypt = require('bcrypt');
-
+// Registration
 app.post('/register', async (req, res) => {
     try {
         const hashedPass = await bcrypt.hash(req.body.pass, 10);
-
-        const newUser = new User({
-            ...req.body,
-            pass: hashedPass
-        });
-
+        const newUser = new User({ ...req.body, pass: hashedPass });
         await newUser.save();
         res.status(200).send({ message: "Account Created!" });
-
     } catch (error) {
         res.status(400).send({ message: "Email or Phone already exists!" });
     }
 });
 
-
-// Login
-
-
+// User Login
 app.post('/login', async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
-
     if (!user) return res.status(401).send("Invalid credentials");
-
     const isMatch = await bcrypt.compare(req.body.pass, user.pass);
-
     if (isMatch) res.json(user);
     else res.status(401).send("Invalid credentials");
 });
@@ -103,7 +99,7 @@ app.post('/place-order', async (req, res) => {
 });
 
 app.get('/admin/orders', async (req, res) => res.json(await Order.find()));
-// Add this to your server.js
+
 app.get('/my-orders/:email', async (req, res) => {
     try {
         const orders = await Order.find({ userEmail: req.params.email });
@@ -112,46 +108,40 @@ app.get('/my-orders/:email', async (req, res) => {
         res.status(500).send("Error fetching orders");
     }
 });
+
 app.post('/admin/update-status', async (req, res) => {
     const { id, status } = req.body;
     await Order.findByIdAndUpdate(id, { status: status });
     res.send("Updated");
 });
-// Update Product Details
+
 app.post('/update-product', async (req, res) => {
     const { id, name, price } = req.body;
     await Product.findByIdAndUpdate(id, { name, price });
     res.send("Product Updated");
 });
-// Get total registered users count
-// server.js
 
-// 1. Get total registered users count
+// --- ADMIN STATS ---
 app.get('/admin/stats/users-count', async (req, res) => {
     const count = await User.countDocuments();
     res.json({ totalUsers: count });
 });
 
-// 2. Get counts for Delivered and Pending orders
 app.get('/admin/stats/order-status-counts', async (req, res) => {
     const deliveredCount = await Order.countDocuments({ status: 'Delivered' });
     const pendingCount = await Order.countDocuments({ status: 'Pending' });
     res.json({ delivered: deliveredCount, pending: pendingCount });
 });
 
-// Get total products sold (sum of all items in all orders)
 app.get('/admin/stats/total-sold', async (req, res) => {
     const orders = await Order.find();
     let totalItems = 0;
     orders.forEach(order => {
-        order.items.forEach(item => {
-            totalItems += (item.qty || 1);
-        });
+        order.items.forEach(item => { totalItems += (item.qty || 1); });
     });
     res.json({ totalSold: totalItems });
 });
 
-// Get sales count for a specific product name
 app.get('/admin/stats/product-sales/:name', async (req, res) => {
     const orders = await Order.find({ "items.name": req.params.name });
     let count = 0;
@@ -161,7 +151,7 @@ app.get('/admin/stats/product-sales/:name', async (req, res) => {
     });
     res.json({ product: req.params.name, sales: count });
 });
-// Add this to server.js
+
 app.get('/admin/users', async (req, res) => {
     try {
         const users = await User.find();
@@ -170,112 +160,80 @@ app.get('/admin/users', async (req, res) => {
         res.status(500).send("Error fetching users");
     }
 });
-// ✅ SERVE FRONTEND FILES
-app.use(express.static(__dirname));
-
-app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/index.html");
-});
-const PORT = process.env.PORT || 3000;
-
-// serve frontend
-app.use(express.static(__dirname));
-
-app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/index.html");
-});
-
-app.listen(process.env.PORT, '0.0.0.0', () => {
-    console.log("🚀 Server running");
-});
-
-app.post("/verify-otp", (req, res) => {
-    const { email, otp } = req.body; // ✅ GET DATA
-
-    if (otpStore[email] == otp) {
-        delete otpStore[email];
-        res.send("OTP Verified");
-    } else {
-        res.status(400).send("Invalid OTP");
-    }
-});
 
 app.post("/admin-login", (req, res) => {
     const { email, pass } = req.body;
-
     if(email === "admin@gmail.com" && pass === "1234"){
         res.send({ success: true });
     } else {
         res.status(401).send({ success: false });
     }
 });
-// ================= OTP SYSTEM =================
 
-// SEND OTP
+// --- FORGOT PASSWORD SYSTEM ---
 
-
-
-// RESET PASSWORD
-
-// ================= OTP SYSTEM =================
-
-// SEND OTP
 app.post('/send-otp', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email } = req.body; 
+        const user = await User.findOne({ email });
 
-        if (!email) {
-            return res.status(400).send("Email required");
+        if (!user) {
+            return res.status(404).send("User not found");
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000);
-        otpStore[email] = otp;
+        otpStore[email] = otp; 
 
-        console.log("Sending email to:", email);
-
-        await transporter.sendMail({
+        const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
-            subject: "OTP for Password Reset",
-            text: `Your OTP is ${otp}`
+            subject: 'Password Reset OTP',
+            html: `<h2>Your OTP is ${otp}</h2><p>Use this to reset your password for SareeShop.</p>`
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                console.log("❌ NODEMAILER ERROR:", error);
+                return res.status(500).send("Email failed: " + error.message);
+            }
+            console.log("✅ Email sent: " + info.response);
+            res.send("OTP sent");
         });
 
-        res.send("OTP sent");
     } catch (err) {
-        console.log("OTP ERROR:", err);
-        res.status(500).send("Error sending OTP");
+        console.log("❌ SERVER ERROR:", err);
+        res.status(500).send("Error sending email");
     }
 });
 
-// VERIFY OTP
+app.post('/verify-otp', (req, res) => {
+    const { email, otp } = req.body;
+    if (otpStore[email] == otp) {
+        res.send("Verified");
+    } else {
+        res.status(400).send("Invalid");
+    }
+});
 
-
-// RESET PASSWORD
 app.post('/reset-password', async (req, res) => {
     try {
         const { email, newPass } = req.body;
-
         const hashed = await bcrypt.hash(newPass, 10);
-
-        await User.findOneAndUpdate(
-            { email },
-            { pass: hashed }
-        );
-
+        await User.findOneAndUpdate({ email }, { pass: hashed });
         delete otpStore[email];
-
-        res.send("Password updated");
+        res.send("Updated");
     } catch (err) {
-        console.log(err);
-        res.status(500).send("Reset failed");
+        res.status(500).send("Failed");
     }
 });
-app.post('/verify-otp', (req, res) => {
-    const { email, otp } = req.body;
 
-    if (otpStore[email] == otp) {
-        res.send("OTP Verified");
-    } else {
-        res.status(400).send("Invalid OTP");
-    }
+app.use(express.static(__dirname));
+
+app.get("/", (req, res) => {
+    res.sendFile(__dirname + "/index.html");
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });
