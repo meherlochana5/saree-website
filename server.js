@@ -4,7 +4,8 @@ const nodemailer = require("nodemailer"); // ✅ ADD THIS
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false, // ✅ IMPORTANT
+    secure: false,
+    family: 4, // ✅ ADD THIS
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
@@ -187,27 +188,7 @@ app.get("/", (req, res) => {
 app.listen(process.env.PORT, '0.0.0.0', () => {
     console.log("🚀 Server running");
 });
-app.post("/send-otp", async (req, res) => {
-    const { email } = req.body;
 
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    otpStore[email] = otp;
-
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "OTP for SareeShop",
-        text: `Your OTP is ${otp}`
-    };
-
-    try {
-        await transporter.sendMail(mailOptions);
-        res.send("OTP sent");
-    } catch (err) {
-        console.log("EMAIL ERROR:", err);
-        res.status(500).send("Error sending OTP");
-    }
-});
 app.post("/verify-otp", (req, res) => {
     const { email, otp } = req.body; // ✅ GET DATA
 
@@ -218,19 +199,7 @@ app.post("/verify-otp", (req, res) => {
         res.status(400).send("Invalid OTP");
     }
 });
-app.post("/reset-password", async (req, res) => {
-    const { email, newPass } = req.body;
 
-    const bcrypt = require("bcrypt");
-    const hashed = await bcrypt.hash(newPass, 10);
-
-    await User.findOneAndUpdate(
-        { email },
-        { pass: hashed }
-    );
-
-    res.send("Password updated successfully ✅");
-});
 app.post("/admin-login", (req, res) => {
     const { email, pass } = req.body;
 
@@ -243,64 +212,11 @@ app.post("/admin-login", (req, res) => {
 // ================= OTP SYSTEM =================
 
 // SEND OTP
-app.post('/send-otp', async (req, res) => {
-    try {
-        const { email } = req.body;
 
-        if (!email) {
-            return res.status(400).send("Email required");
-        }
 
-        const otp = Math.floor(100000 + Math.random() * 900000);
-        otpStore[email] = otp;
-
-        console.log("Sending email to:", email);
-
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: "OTP for Password Reset",
-            text: `Your OTP is ${otp}`
-        });
-
-        res.send("OTP sent");
-    } catch (err) {
-        console.log("OTP ERROR:", err);
-        res.status(500).send("Error sending OTP");
-    }
-});
-
-// VERIFY OTP
-app.post('/verify-otp', (req, res) => {
-    const { email, otp } = req.body;
-
-    if (otpStore[email] == otp) {
-        res.send("OTP verified");
-    } else {
-        res.status(400).send("Invalid OTP");
-    }
-});
 
 // RESET PASSWORD
-app.post('/reset-password', async (req, res) => {
-    try {
-        const { email, newPass } = req.body;
 
-        const hashed = await bcrypt.hash(newPass, 10);
-
-        await User.findOneAndUpdate(
-            { email },
-            { pass: hashed }
-        );
-
-        delete otpStore[email];
-
-        res.send("Password updated");
-    } catch (err) {
-        console.log(err);
-        res.status(500).send("Reset failed");
-    }
-});
 // ================= OTP SYSTEM =================
 
 // SEND OTP
@@ -332,15 +248,7 @@ app.post('/send-otp', async (req, res) => {
 });
 
 // VERIFY OTP
-app.post('/verify-otp', (req, res) => {
-    const { email, otp } = req.body;
 
-    if (otpStore[email] == otp) {
-        res.send("OTP verified");
-    } else {
-        res.status(400).send("Invalid OTP");
-    }
-});
 
 // RESET PASSWORD
 app.post('/reset-password', async (req, res) => {
@@ -360,5 +268,14 @@ app.post('/reset-password', async (req, res) => {
     } catch (err) {
         console.log(err);
         res.status(500).send("Reset failed");
+    }
+});
+app.post('/verify-otp', (req, res) => {
+    const { email, otp } = req.body;
+
+    if (otpStore[email] == otp) {
+        res.send("OTP Verified");
+    } else {
+        res.status(400).send("Invalid OTP");
     }
 });

@@ -92,46 +92,8 @@ function forgotPass() {
     })
     .catch(err => console.log(err));
 }
-function verifyOtp() {
-    const otp = document.getElementById("otpInput").value.trim();
 
-    fetch("https://saree-website-zn6k.onrender.com/verify-otp", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-            email: currentEmail,
-            otp: otp
-        })
-    })
-    .then(res => res.text())
-    .then(msg => {
-        if(msg.includes("Verified")){
-            showToast("OTP Verified ✅");
-            document.getElementById("resetBox").style.display = "block";
-        } else {
-            showToast("Invalid OTP ❌");
-        }
-    })
-    .catch(() => showToast("Server error ❌"));
-}
-function resetPassword() {
-    const newPass = document.getElementById("newPass").value.trim();
 
-    fetch("https://saree-website-zn6k.onrender.com/reset-password", {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({
-            email: currentEmail,
-            newPass: newPass
-        })
-    })
-    .then(res => res.text())
-    .then(msg => {
-        showToast("Password Updated ✅");
-        window.location.reload();
-    })
-    .catch(() => showToast("Error ❌"));
-}
 function verifyOtp() {
     let otp = document.getElementById("otpInput").value;
 
