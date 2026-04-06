@@ -74,19 +74,11 @@ function handleLogin() {
         showToast("Invalid Email or Password ❌");
     });
 }
-let currentEmail = ""; // ✅ GLOBAL
+let currentEmail = ""; // ✅ KEEP THIS
 
 function forgotPass() {
-    let email = document.getElementById("email").value.trim();
-
-    if (!email) {
-        showToast("Enter email first ❗");
-        return;
-    }
-
+    let email = document.getElementById("email").value;
     currentEmail = email;
-
-    showToast("Sending OTP... ⏳"); // 👈 ADD THIS
 
     fetch("https://saree-website-zn6k.onrender.com/send-otp", {
         method: "POST",
@@ -95,19 +87,10 @@ function forgotPass() {
     })
     .then(res => res.text())
     .then(msg => {
-        console.log("SERVER RESPONSE:", msg); // 👈 VERY IMPORTANT
-
-        if(msg.includes("OTP sent")){
-            showToast("OTP sent 📩");
-            document.getElementById("otpBox").style.display = "block";
-        } else {
-            showToast(msg); // 👈 SHOW REAL ERROR
-        }
+        console.log(msg);
+        document.getElementById("otpBox").style.display = "block";
     })
-    .catch((err) => {
-        console.log(err);
-        showToast("Server error ❌");
-    });
+    .catch(err => console.log(err));
 }
 function verifyOtp() {
     const otp = document.getElementById("otpInput").value.trim();
@@ -148,6 +131,36 @@ function resetPassword() {
         window.location.reload();
     })
     .catch(() => showToast("Error ❌"));
+}
+function verifyOtp() {
+    let otp = document.getElementById("otpInput").value;
+
+    fetch("https://saree-website-zn6k.onrender.com/verify-otp", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email: currentEmail, otp })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        document.getElementById("resetBox").style.display = "block";
+    })
+    .catch(err => console.log(err));
+}
+
+function resetPassword() {
+    let newPass = document.getElementById("newPass").value;
+
+    fetch("https://saree-website-zn6k.onrender.com/reset-password", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ email: currentEmail, newPass })
+    })
+    .then(res => res.text())
+    .then(msg => {
+        alert("Password updated ✅");
+        window.location.reload();
+    })
+    .catch(err => console.log(err));
 }
 </script>
 <div id="toast"></div>

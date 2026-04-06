@@ -187,24 +187,22 @@ app.listen(process.env.PORT, '0.0.0.0', () => {
 });
 app.post("/send-otp", async (req, res) => {
     const { email } = req.body;
-console.log("Sending email to:", email);
-console.log("EMAIL ERROR:", err);
-    const otp = Math.floor(100000 + Math.random() * 900000);
 
+    const otp = Math.floor(100000 + Math.random() * 900000);
     otpStore[email] = otp;
 
     const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
         subject: "OTP for SareeShop",
-        text: `Your OTP is ${otp}. Valid for 3 minutes.`
+        text: `Your OTP is ${otp}`
     };
 
     try {
         await transporter.sendMail(mailOptions);
         res.send("OTP sent");
     } catch (err) {
-        console.log(err);
+        console.log("EMAIL ERROR:", err);
         res.status(500).send("Error sending OTP");
     }
 });
@@ -238,5 +236,127 @@ app.post("/admin-login", (req, res) => {
         res.send({ success: true });
     } else {
         res.status(401).send({ success: false });
+    }
+});
+// ================= OTP SYSTEM =================
+
+// SEND OTP
+app.post('/send-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).send("Email required");
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000);
+        otpStore[email] = otp;
+
+        console.log("Sending email to:", email);
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "OTP for Password Reset",
+            text: `Your OTP is ${otp}`
+        });
+
+        res.send("OTP sent");
+    } catch (err) {
+        console.log("OTP ERROR:", err);
+        res.status(500).send("Error sending OTP");
+    }
+});
+
+// VERIFY OTP
+app.post('/verify-otp', (req, res) => {
+    const { email, otp } = req.body;
+
+    if (otpStore[email] == otp) {
+        res.send("OTP verified");
+    } else {
+        res.status(400).send("Invalid OTP");
+    }
+});
+
+// RESET PASSWORD
+app.post('/reset-password', async (req, res) => {
+    try {
+        const { email, newPass } = req.body;
+
+        const hashed = await bcrypt.hash(newPass, 10);
+
+        await User.findOneAndUpdate(
+            { email },
+            { pass: hashed }
+        );
+
+        delete otpStore[email];
+
+        res.send("Password updated");
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Reset failed");
+    }
+});
+// ================= OTP SYSTEM =================
+
+// SEND OTP
+app.post('/send-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).send("Email required");
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000);
+        otpStore[email] = otp;
+
+        console.log("Sending email to:", email);
+
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "OTP for Password Reset",
+            text: `Your OTP is ${otp}`
+        });
+
+        res.send("OTP sent");
+    } catch (err) {
+        console.log("OTP ERROR:", err);
+        res.status(500).send("Error sending OTP");
+    }
+});
+
+// VERIFY OTP
+app.post('/verify-otp', (req, res) => {
+    const { email, otp } = req.body;
+
+    if (otpStore[email] == otp) {
+        res.send("OTP verified");
+    } else {
+        res.status(400).send("Invalid OTP");
+    }
+});
+
+// RESET PASSWORD
+app.post('/reset-password', async (req, res) => {
+    try {
+        const { email, newPass } = req.body;
+
+        const hashed = await bcrypt.hash(newPass, 10);
+
+        await User.findOneAndUpdate(
+            { email },
+            { pass: hashed }
+        );
+
+        delete otpStore[email];
+
+        res.send("Password updated");
+    } catch (err) {
+        console.log(err);
+        res.status(500).send("Reset failed");
     }
 });
