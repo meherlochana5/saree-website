@@ -27,14 +27,17 @@
         Don't have an account? <a href="signup.html" class="toggle-link">Signup here</a>
     </p>
 </div>
-<div id="otpBox" style="display:none; text-align:center; margin-top:20px;">
-    <input id="otpInput" placeholder="Enter OTP">
-    <button onclick="verifyOtp()">Verify OTP</button>
+<div id="otpBox" style="display:none; max-width: 400px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center;">
+    <h3 style="color: #ff9800;">Verify OTP</h3>
+    <p style="font-size: 0.9rem; color: #666;">Enter the code sent to your email</p>
+    <input id="otpInput" placeholder="Enter 6-digit OTP" style="width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+    <button class="cart-btn" onclick="verifyOtp()" style="width: 100%;">Verify OTP</button>
 </div>
 
-<div id="resetBox" style="display:none; text-align:center; margin-top:20px;">
-    <input id="newPass" placeholder="Enter New Password">
-    <button onclick="resetPassword()">Reset Password</button>
+<div id="resetBox" style="display:none; max-width: 400px; margin: 20px auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center;">
+    <h3 style="color: #ff9800;">Create New Password</h3>
+    <input type="password" id="newPass" placeholder="Enter New Password" style="width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px;">
+    <button class="cart-btn" onclick="resetPassword()" style="width: 100%; background-color: #28a745;">Update Password</button>
 </div>
 
 <script>
@@ -80,7 +83,7 @@ function forgotPass() {
     let email = document.getElementById("email").value.trim();
     
     if (!email) {
-        alert("Please enter your Email Address first!");
+        showToast("Please enter your Email Address first!");
         return;
     }
 
@@ -96,7 +99,7 @@ function forgotPass() {
         return res.text();
     })
     .then(msg => {
-        alert("OTP sent to " + currentEmail);
+        showToast("OTP sent to " + currentEmail);
         document.getElementById("otpBox").style.display = "block";
     })
     .catch(err => alert(err.message));
@@ -112,11 +115,11 @@ function verifyOtp() {
     })
     .then(res => {
         if (res.ok) {
-            alert("OTP Verified ✅");
+            showToast("OTP Verified ✅");
             document.getElementById("otpBox").style.display = "none";
             document.getElementById("resetBox").style.display = "block";
         } else {
-            alert("Invalid OTP ❌");
+           showToast("Invalid OTP ❌");
         }
     });
 }
@@ -124,7 +127,7 @@ function verifyOtp() {
 function resetPassword() {
     let newPass = document.getElementById("newPass").value;
     
-    if(!newPass) return alert("Please enter a new password");
+    if(!newPass) return showToast("Please enter a new password");
 
     fetch("https://saree-website-zn6k.onrender.com/reset-password", {
         method: "POST",
@@ -133,11 +136,11 @@ function resetPassword() {
     })
     .then(res => {
         if(res.ok) {
-            alert("Password Updated! You can now login.");
+            showToast("Password Updated! You can now login.");
             window.location.reload();
         }
     })
-    .catch(err => alert("Reset failed"));
+    .catch(err => showToast("Reset failed"));
 }
 </script>
 <div id="toast"></div>
